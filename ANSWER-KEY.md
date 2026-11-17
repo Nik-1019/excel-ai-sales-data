@@ -40,6 +40,11 @@ Seed 20261117. The messy file has 200 rows; the clean file has 190.
 | West | $355 | $593 | $813 | $873 | $1,971 | $1,698 | +378% |
 | Unknown | $0 | $324 | $0 | $0 | $358 | $249 | n/a |
 
+## Dashboard update test (clean-sales.xlsx)
+
+- Change SO-1001 (Laptop Stand) Quantity in cell E2 from 2 to 20: total sales goes from $26,261 to $26,963.
+
 ## July (july-sales.xlsx)
 
 - 39 orders, Order IDs SO-1191 onward, total $6,004
+- January to July together: 229 orders, total $32,265

@@ -138,14 +138,17 @@ def fmt_date(i, d):
 HEADERS = ["Order ID", "Order Date", "Product", "Region", "Quantity", "Unit Price"]
 
 
-def write_sheet(path, header, data_rows, date_col=1, money_cols=(), title="Sales"):
+def write_sheet(path, header, data_rows, date_col=1, money_cols=(), title="Sales", sales_formula=False):
     wb = Workbook()
     ws = wb.active
     ws.title = title
     ws.append(header)
     for c in ws[1]:
         c.font = Font(bold=True)
-    for r in data_rows:
+    for n, r in enumerate(data_rows, start=2):
+        r = list(r)
+        if sales_formula:
+            r[6] = f"=E{n}*F{n}"  # Sales = Quantity x Unit Price, so edits flow through
         ws.append(r)
     for row in ws.iter_rows(min_row=2):
         cell = row[date_col]
@@ -172,7 +175,7 @@ clean_rows = []
 for i, o in enumerate(orders):
     region = "Unknown" if i in blank_region else o["region"]
     clean_rows.append([o["id"], o["date"], o["product"], region, o["qty"], o["price"], o["qty"] * o["price"]])
-write_sheet("clean-sales.xlsx", HEADERS + ["Sales"], clean_rows, money_cols=(5, 6))
+write_sheet("clean-sales.xlsx", HEADERS + ["Sales"], clean_rows, money_cols=(5, 6), sales_formula=True)
 
 # ---- July, the new month -------------------------------------------------------
 july = make_orders(2026, [7], 1191, lambda r, m: {"North": 9, "South": 7, "East": 8, "West": 15}[r])
@@ -181,6 +184,7 @@ write_sheet(
     HEADERS + ["Sales"],
     [[o["id"], o["date"], o["product"], o["region"], o["qty"], o["price"], o["qty"] * o["price"]] for o in july],
     money_cols=(5, 6),
+    sales_formula=True,
 )
 
 # ---- Answer key ----------------------------------------------------------------
@@ -238,6 +242,18 @@ for reg in REGIONS + ["Unknown"]:
     change = f"{(vals[5] - vals[0]) / vals[0]:+.0%}" if vals[0] else "n/a"
     lines.append(f"| {reg} | " + " | ".join(f"${v:,}" for v in vals) + f" | {change} |")
 july_total = sum(o["qty"] * o["price"] for o in july)
-lines += ["", f"## July (july-sales.xlsx)", "", f"- {len(july)} orders, Order IDs SO-1191 onward, total ${july_total:,}"]
+first = clean_rows[0]
+bumped = total + (20 - first[4]) * first[5]
+lines += [
+    "",
+    "## Dashboard update test (clean-sales.xlsx)",
+    "",
+    f"- Change {first[0]} ({first[2]}) Quantity in cell E2 from {first[4]} to 20: total sales goes from ${total:,} to ${bumped:,}.",
+    "",
+    "## July (july-sales.xlsx)",
+    "",
+    f"- {len(july)} orders, Order IDs SO-1191 onward, total ${july_total:,}",
+    f"- January to July together: {len(clean_rows) + len(july)} orders, total ${total + july_total:,}",
+]
 open("ANSWER-KEY.md", "w").write("\n".join(lines) + "\n")
 print("\n".join(lines))
